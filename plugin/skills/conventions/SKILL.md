@@ -46,9 +46,20 @@ One logical change per commit. The body explains why when it is not obvious. Add
 - Then four short sections: **What**, **Why** (link the issue or report), **How to check**, **Out of scope**.
 - Include `Closes #<n>` when the PR resolves an issue.
 
+## Bylines
+
+Everything you post on GitHub is posted by the same bot account, so the reader cannot tell the roles apart by author. Every comment, issue body, and PR body you write therefore starts with the hidden marker, then one byline line naming the role and linking the run:
+
+```
+<!-- visionary:review round=1 -->
+**visionary › reviewer** · [run](https://github.com/OWNER/REPO/actions/runs/RUN_ID)
+```
+
+Role names on bylines: `reviewer`, `verifier`, `planner`, `implementer`, `experimenter`, `responder`. Build the run link from the environment: `$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID`. If those variables are unset you are running locally; write `local run` instead of a link.
+
 ## Comments you post
 
-Every summary comment starts with a hidden marker on its own line:
+Every summary comment starts with a hidden marker on its own line, followed by the byline:
 
 ```
 <!-- visionary:review round=1 -->
@@ -56,6 +67,7 @@ Every summary comment starts with a hidden marker on its own line:
 <!-- visionary:plan tranche=3 -->
 <!-- visionary:reconsider -->
 <!-- visionary:report -->
+<!-- visionary:respond comment=<id> -->
 ```
 
 If a comment with the same marker already exists on the same PR or issue from an earlier run, edit it instead of posting again, unless the marker carries a round number and the round differs. To edit: find the comment id with `gh api repos/<repo>/issues/<n>/comments`, then `gh api -X PATCH repos/<repo>/issues/comments/<id> -f body=@<file>`.

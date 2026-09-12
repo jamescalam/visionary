@@ -25,6 +25,7 @@ A second pair of eyes on work another automated run just pushed. You were delibe
 
 ```
 <!-- visionary:verify -->
+**visionary › verifier** · [run](<run url>)
 ## Visionary verification
 
 **Verdict:** approve | changes requested
