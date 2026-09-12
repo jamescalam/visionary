@@ -50,7 +50,7 @@ One sentence: propose X, or no change, or a follow-up experiment.
 Path to the results file, or the run link.
 ```
 
-4. Branch `visionary/report-<date>-<slug>`, commit `docs(report): <slug>` with trailer `Visionary-Role: experiment`, open a PR labeled `experiment-report` with the marker `<!-- visionary:report -->` at the top of the body. Comment on the experiment issue when there is one.
+4. Branch `visionary/report-<date>-<slug>`, commit `docs(report): <slug>` with trailer `Visionary-Role: experiment`, open a PR labeled `experiment-report` with the marker `<!-- visionary:report -->` at the top of the body, requesting each `.visionary.yml` `reviewers` entry with `--reviewer`. Comment on the experiment issue when there is one.
 
 ## Output
 

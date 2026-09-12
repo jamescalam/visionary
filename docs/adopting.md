@@ -39,6 +39,12 @@ Callers reference `jamescalam/visionary/.github/workflows/<name>.yml@<ref>`. The
 
 The plan workflow creates these on first run: `visionary`, `proposal`, `approved`, `in-progress`, `reconsider`, `experiment`, `experiment-report`, `agent-fix-ok`. Only `approved` and `agent-fix-ok` are meant to be added by a person.
 
+## Who reviews
+
+List the people who should be asked to review agent-authored PRs under `reviewers` in `.visionary.yml`. The implementer and experimenter request them on every PR they open. Agents cannot approve, so branch protection plus a requested human reviewer is the merge gate.
+
+The GitHub identity the agents act as is the Claude GitHub App (`claude[bot]`), which is separate from the Claude subscription that pays for the runs. To move the spend onto a bot account, generate `CLAUDE_CODE_OAUTH_TOKEN` from that account's own Claude subscription; the GitHub identity is unaffected.
+
 ## Talking to the agents
 
 The responder runs on every human comment on a PR or issue an agent opened, and on any comment mentioning `//vision` elsewhere. Reviews with inline comments arrive as one `pull_request_review` event, so leave a review and submit it; each inline thread you left is read. On a proposal issue, a comment can ask the responder to revise the proposal body; it never adds `approved`. The phrase is `//vision`, deliberately not an @-mention: GitHub links every `@name` in a comment to a real user, so an invented handle would notify a stranger, and `@claude` collides with the Claude GitHub App's own mention handling. Change it in the caller's `if:` if you want another.
