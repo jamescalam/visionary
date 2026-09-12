@@ -72,6 +72,10 @@ Every summary comment starts with a hidden marker on its own line, followed by t
 
 If a comment with the same marker already exists on the same PR or issue from an earlier run, edit it instead of posting again, unless the marker carries a round number and the round differs. To edit: find the comment id with `gh api repos/<repo>/issues/<n>/comments`, then `gh api -X PATCH repos/<repo>/issues/comments/<id> -f body=@<file>`.
 
+## Claims
+
+Never write that you did something without checking that it is true in the tree you are about to push. A commit message, a changelog entry, a review finding, and a summary are all claims, and a wrong one costs the next role more than saying nothing. Before you claim a fix: run the thing, read the diff you actually produced, and confirm the behaviour changed. Patching by line range or by a fragile match is where claims most often go wrong: re-read the file afterwards.
+
 ## Structured output
 
 When the run gives you a JSON schema, your final answer is that JSON object and nothing else. Fill every field. `summary` is one to three plain sentences a person can read in a chat message.
