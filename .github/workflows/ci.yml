@@ -16,8 +16,8 @@ jobs:
       - name: Validate plugin, manifests, and secret hygiene
         run: python3 scripts/validate_plugin.py
       - name: Lint workflows and caller templates
-        uses: raven-actions/actionlint@v2
-        with:
-          flags: -ignore 'SC2016' .github/workflows/*.yml templates/*.yml
+        run: |
+          bash <(curl -sL https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash) 1.7.12 "$RUNNER_TEMP" >/dev/null
+          "$RUNNER_TEMP/actionlint" -ignore SC2016 .github/workflows/*.yml templates/*.yml
       - name: Script syntax
         run: python3 -m py_compile scripts/*.py
