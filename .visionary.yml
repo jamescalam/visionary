@@ -4,6 +4,7 @@ version: 1
 checks:
   validate: python3 scripts/validate_plugin.py
   syntax: python3 -m py_compile scripts/*.py
+  lint: ./actionlint -ignore SC2016
 
 review:
   max_open_agent_prs: 2
@@ -12,6 +13,7 @@ plan:
   max_proposals: 3
 
 labels:
+  visionary: visionary
   proposal: proposal
   approved: approved
   in_progress: in-progress
