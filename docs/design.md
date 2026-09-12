@@ -18,7 +18,7 @@ A tranche is a milestone. Completion is a property of GitHub state (no open PRs,
 
 ## The reviewer's own push
 
-When the reviewer commits fixes, GitHub raises a `synchronize` event like any other push. Two things keep that from looping or self-cancelling: the caller's concurrency group is keyed on the run id for bot-triggered runs so they never cancel the human-triggered run that made them, and the review job skips synchronize events whose actor is the bot. The verifier in the original run is the check on those commits.
+When an agent commits, GitHub raises a `synchronize` event like any other push, and the question is whether that should start a review. The reviewer's own commits should not: the verifier in the run that made them is their cold read, and re-reviewing would never terminate. Any other role's commits should, because the responder acting on human feedback or the implementer fixing something changes the pull request as a whole, and the verifier only reads the pushed range. A gate job resolves this by reading the head commit's `Visionary-Role` trailer. Separately, the caller's concurrency group is keyed on the run id for bot-triggered runs, so a bot push never cancels the run that made it.
 
 ## Enforcement over prompting
 

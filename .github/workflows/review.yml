@@ -48,15 +48,51 @@ env:
   VERIFY_SCHEMA: '{"type":"object","properties":{"verdict":{"type":"string","enum":["approve","changes_requested"]},"summary":{"type":"string"}},"required":["verdict","summary"]}'
 
 jobs:
-  review:
-    name: review
-    # Runs on human events only. A synchronize caused by the bot's own push
-    # (the reviewer or responder committing fixes) is covered by the verifier
-    # in the run that pushed, so it must not start another review.
+  # A push by the reviewer itself must not start another review, or the loop
+  # never terminates: its own commits are covered by the verifier in the run
+  # that made them. A push by any other role (the responder acting on human
+  # feedback, the implementer) changes the pull request as a whole, so the
+  # whole thing gets reviewed again. The role is read from the head commit's
+  # Visionary-Role trailer, which every role writes.
+  gate:
+    name: gate
     if: >-
       github.event.pull_request.head.repo.full_name == github.repository &&
-      github.event.pull_request.draft == false &&
-      !(github.event.action == 'synchronize' && (github.actor == inputs.bot_login || github.actor == 'github-actions[bot]'))
+      github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      skip: ${{ steps.decide.outputs.skip }}
+    steps:
+      - id: decide
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ACTION: ${{ github.event.action }}
+          ACTOR: ${{ github.actor }}
+          BOT: ${{ inputs.bot_login }}
+          SHA: ${{ github.event.pull_request.head.sha }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          skip=false
+          if [ "$ACTION" = synchronize ] && { [ "$ACTOR" = "$BOT" ] || [ "$ACTOR" = "github-actions[bot]" ]; }; then
+            msg=$(gh api "repos/$REPO/commits/$SHA" --jq '.commit.message' || echo "")
+            if grep -qi '^Visionary-Role: review' <<<"$msg"; then
+              skip=true
+              echo "head commit is the reviewer's own; the verifier in that run covers it"
+            else
+              echo "head commit is from another role; reviewing the pull request again"
+            fi
+          fi
+          echo "skip=$skip" >> "$GITHUB_OUTPUT"
+
+  review:
+    name: review
+    needs: gate
+    if: needs.gate.outputs.skip != 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 90
     permissions:
