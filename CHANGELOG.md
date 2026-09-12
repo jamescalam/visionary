@@ -5,6 +5,8 @@ Breaking means an adopter has to change something: a removed or renamed `.vision
 ## Unreleased
 
 ### Changed
+- New `respond` role and `respond.yml` reusable workflow: acts on human comments on agent-opened PRs and issues, and on `@vision` mentions anywhere. The verifier runs after it pushes.
+- Every agent comment, issue body, and PR body starts with a byline naming the role and linking the run; commits are authored as `visionary-<role>`.
 - `run-agent` allows the leading word of every command in `.visionary.yml` `checks` and `bench.command`, so adopters' own tooling is not denied by the role allowlists.
 - `review.yml` creates the fix label (`agent-fix-ok` by default) on first run.
 - `labels.visionary` added to the config template.
