@@ -46,8 +46,9 @@ S (under 100 lines) / M (under 400) / L (explain why it is still one item)
 ```
 
 - Existing open `proposal` issues without the `approved` label: move them into this tranche if they still fit the vision, otherwise close them with a one-line comment saying why. Never close an issue a human opened; recommend closing it in the tranche summary instead.
-- When `$reason` is `vision-changed`, look at every open PR. For one that no longer fits, comment with marker `<!-- visionary:reconsider -->`, quoting the vision line it conflicts with and what would make it fit, and add the `reconsider` label. Never close a PR.
-- At most `max_proposals` new proposals per run. Prefer proposals backed by a report, a failing behaviour, or an open issue over ones that rest on taste. Prefer the change that unblocks others.
+- On every run, read every open PR against the vision, whatever `$reason` is: the vision may have moved since the PR was opened. For one that no longer fits, comment with marker `<!-- visionary:reconsider -->`, quoting the vision line it conflicts with and what would make it fit, and add the `reconsider` label. Never close a PR. A PR that fits gets no comment.
+- At most `max_proposals` new proposals per run. Prefer proposals backed by a report, a failing behaviour, or an open issue over ones that rest on taste. Prefer the change that unblocks others. Reproduce the evidence where you can: run the code, time it, print the wrong output, and put the transcript in the Problem section.
+- Work the vision gates: if the vision says a class of change waits on something (a benchmark, a baseline, a decision), do not propose it yet; record it under a `Deferred` heading in the tranche summary with the measurements you already have.
 - Write the tranche summary into the milestone description with `gh api -X PATCH repos/$repo/milestones/<id> -f description=@<file>`:
 
 ```
@@ -58,6 +59,7 @@ Carried: #c
 Dropped: #d (why)
 Reconsider: #pr (why)
 Recommend closing: #issue (why)
+Deferred: what waits and on what
 Likely next: one line
 ```
 

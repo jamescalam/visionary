@@ -82,6 +82,12 @@ jobs:
         if: inputs.setup != ''
         shell: bash
         run: ${{ inputs.setup }}
+      - name: Ensure the fix label exists
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FIX_LABEL: ${{ inputs.fix_label }}
+        run: gh label create "$FIX_LABEL" --color e4e669 --description "Reviewer may push fixes to this PR" 2>/dev/null || true
       - name: Decide mode
         id: mode
         shell: bash

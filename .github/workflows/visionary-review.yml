@@ -23,5 +23,8 @@ jobs:
     uses: ./.github/workflows/review.yml
     with:
       visionary_ref: ${{ github.event.pull_request.head.sha }}
+      setup: |
+        bash <(curl -sL https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash) 1.7.12 . >/dev/null
+        ./actionlint -version
     secrets:
       claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}

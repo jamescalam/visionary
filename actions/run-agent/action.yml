@@ -83,6 +83,45 @@ runs:
         GH_TOKEN: ${{ github.token }}
         PR: ${{ inputs.pr_number }}
       run: echo "sha=$(gh pr view "$PR" --json headRefOid -q .headRefOid)" >> "$GITHUB_OUTPUT"
+    - name: Allow the project's configured check and bench commands
+      id: project_tools
+      shell: bash
+      run: |
+        # .visionary.yml names the commands the roles must run (checks, bench).
+        # Allow each command's leading word so an adopter's own tooling is not
+        # silently denied by the role's allowlist.
+        extra=$(python3 - <<'PY'
+        import os, re, shlex
+        path = ".visionary.yml"
+        if not os.path.exists(path):
+            raise SystemExit
+        try:
+            import yaml
+            cfg = yaml.safe_load(open(path)) or {}
+        except Exception:
+            raise SystemExit
+        cmds = []
+        for v in (cfg.get("checks") or {}).values():
+            cmds.append(str(v))
+        bench = cfg.get("bench") or {}
+        if bench.get("command"):
+            cmds.append(str(bench["command"]))
+        tools = []
+        for c in cmds:
+            for part in re.split(r"\s*(?:&&|\|\||;|\|)\s*", c):
+                words = shlex.split(part) if part.strip() else []
+                if not words:
+                    continue
+                head = words[0]
+                if head in ("env", "sudo"):
+                    continue
+                if re.fullmatch(r"[A-Za-z0-9_./-]+", head):
+                    tools.append(f"Bash({head}:*)")
+        print(",".join(dict.fromkeys(tools)))
+        PY
+        )
+        echo "tools=$extra" >> "$GITHUB_OUTPUT"
+        if [ -n "$extra" ]; then echo "project tools allowed: $extra"; fi
     - name: Compose claude_args
       id: compose
       shell: bash
@@ -92,6 +131,7 @@ runs:
         EFFORT: ${{ inputs.effort }}
         MAX_TURNS: ${{ inputs.max_turns }}
         ALLOWED: ${{ inputs.allowed_tools }}
+        PROJECT_TOOLS: ${{ steps.project_tools.outputs.tools }}
         DISALLOWED: ${{ inputs.disallowed_tools }}
         SCHEMA: ${{ inputs.json_schema }}
         EXTRA: ${{ inputs.extra_claude_args }}
@@ -100,6 +140,7 @@ runs:
           echo "::error::plugin manifest not found at $PLUGIN_DIR/.claude-plugin/plugin.json (cwd $PWD)"; exit 1
         fi
         PLUGIN_DIR="$(cd "$PLUGIN_DIR" && pwd)"
+        if [ -n "$PROJECT_TOOLS" ] && [ -n "$ALLOWED" ]; then ALLOWED="$ALLOWED,$PROJECT_TOOLS"; elif [ -n "$PROJECT_TOOLS" ]; then ALLOWED="$PROJECT_TOOLS"; fi
         args="--plugin-dir $PLUGIN_DIR --model $MODEL --effort $EFFORT --max-turns $MAX_TURNS"
         if [ -n "$ALLOWED" ]; then args="$args --allowedTools \"$ALLOWED\""; fi
         if [ -n "$DISALLOWED" ]; then args="$args --disallowedTools \"$DISALLOWED\""; fi
