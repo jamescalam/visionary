@@ -96,6 +96,10 @@ runs:
         SCHEMA: ${{ inputs.json_schema }}
         EXTRA: ${{ inputs.extra_claude_args }}
       run: |
+        if [ ! -f "$PLUGIN_DIR/.claude-plugin/plugin.json" ]; then
+          echo "::error::plugin manifest not found at $PLUGIN_DIR/.claude-plugin/plugin.json (cwd $PWD)"; exit 1
+        fi
+        PLUGIN_DIR="$(cd "$PLUGIN_DIR" && pwd)"
         args="--plugin-dir $PLUGIN_DIR --model $MODEL --effort $EFFORT --max-turns $MAX_TURNS"
         if [ -n "$ALLOWED" ]; then args="$args --allowedTools \"$ALLOWED\""; fi
         if [ -n "$DISALLOWED" ]; then args="$args --disallowedTools \"$DISALLOWED\""; fi
