@@ -20,6 +20,10 @@ on:
         description: id of the triggering comment or review
         type: string
         required: true
+      trigger_kind:
+        description: comment (conversation), inline (one diff comment), or review (a submitted review)
+        type: string
+        default: comment
       head_ref:
         description: PR head branch (empty for issues)
         type: string
@@ -82,12 +86,13 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
           ID: ${{ inputs.trigger_id }}
+          KIND: ${{ inputs.trigger_kind }}
           NUMBER: ${{ inputs.number }}
         run: |
           react() { gh api -X POST "$1/reactions" -f content=eyes --silent 2>/dev/null; }
-          if react "repos/$REPO/issues/comments/$ID"; then
-            echo "reacted to issue comment $ID"
-          elif react "repos/$REPO/pulls/comments/$ID"; then
+          if [ "$KIND" = comment ] && react "repos/$REPO/issues/comments/$ID"; then
+            echo "reacted to conversation comment $ID"
+          elif [ "$KIND" = inline ] && react "repos/$REPO/pulls/comments/$ID"; then
             echo "reacted to inline comment $ID"
           else
             first=$(gh api "repos/$REPO/pulls/$NUMBER/comments" --jq "[.[] | select(.pull_request_review_id == $ID)][0].id" 2>/dev/null || echo "")
@@ -116,7 +121,7 @@ jobs:
         uses: ./.visionary/actions/run-agent
         with:
           skill: respond
-          args: ${{ github.repository }} ${{ inputs.kind }} ${{ inputs.number }} ${{ inputs.trigger_id }}
+          args: ${{ github.repository }} ${{ inputs.kind }} ${{ inputs.number }} ${{ inputs.trigger_id }} ${{ inputs.trigger_kind }}
           oauth_token: ${{ secrets.claude_code_oauth_token }}
           model: ${{ inputs.model }}
           effort: ${{ inputs.effort }}
