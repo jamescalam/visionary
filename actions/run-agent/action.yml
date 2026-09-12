@@ -46,6 +46,10 @@ inputs:
     description: Anything else to append to claude_args
     required: false
     default: ""
+  show_full_output:
+    description: Print the full Claude Code message stream to the job log (tool results included)
+    required: false
+    default: "true"
 outputs:
   conclusion:
     description: success or failure
@@ -111,6 +115,7 @@ runs:
         claude_args: ${{ steps.compose.outputs.args }}
         allowed_bots: "claude[bot]"
         display_report: "true"
+        show_full_output: ${{ inputs.show_full_output }}
     - name: Detect pushed commits
       id: after
       if: always() && inputs.pr_number != ''
