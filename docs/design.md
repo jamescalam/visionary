@@ -16,6 +16,10 @@ The verifier gets only the commit range the reviewer pushed and the review's pub
 
 A tranche is a milestone. Completion is a property of GitHub state (no open PRs, no open issues in the milestone), checked on every PR close, so the planner runs when work actually finishes rather than on a schedule. Reports from the experimenter queue as inputs for the next plan rather than triggering one; that keeps proposal churn low.
 
+## The reviewer's own push
+
+When the reviewer commits fixes, GitHub raises a `synchronize` event like any other push. Two things keep that from looping or self-cancelling: the caller's concurrency group is keyed on the run id for bot-triggered runs so they never cancel the human-triggered run that made them, and the review job skips synchronize events whose actor is the bot. The verifier in the original run is the check on those commits.
+
 ## Enforcement over prompting
 
 Turn caps, tool allowlists, deny lists for force-push and merge, per-PR concurrency, the bot allowlist, and branch protection are all enforced outside the model. The prompts describe good behaviour; the workflows make bad behaviour impossible or at least cheap.

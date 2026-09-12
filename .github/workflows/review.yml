@@ -50,9 +50,13 @@ env:
 jobs:
   review:
     name: review
+    # Runs on human events only. A synchronize caused by the bot's own push
+    # (the reviewer or responder committing fixes) is covered by the verifier
+    # in the run that pushed, so it must not start another review.
     if: >-
       github.event.pull_request.head.repo.full_name == github.repository &&
-      github.event.pull_request.draft == false
+      github.event.pull_request.draft == false &&
+      !(github.event.action == 'synchronize' && (github.actor == inputs.bot_login || github.actor == 'github-actions[bot]'))
     runs-on: ubuntu-latest
     timeout-minutes: 90
     permissions:
