@@ -1,0 +1,10 @@
+{
+  "name": "visionary",
+  "displayName": "Visionary",
+  "version": "0.1.0",
+  "description": "Five pipeline roles as skills: review, verify, plan, implement, experiment. Each one is a fresh Claude Code run triggered by a GitHub event and steered by the repo's VISION.md.",
+  "author": { "name": "James Briggs", "url": "https://github.com/jamescalam" },
+  "repository": "https://github.com/jamescalam/visionary",
+  "license": "MIT",
+  "keywords": ["agents", "github-actions", "code-review", "planning", "experiments"]
+}

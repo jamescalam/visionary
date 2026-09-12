@@ -1,0 +1,84 @@
+name: Visionary experiment
+
+# Reusable workflow. Runs one experiment through the repo's benchmark and
+# opens a report PR. Call it on a schedule and on workflow_dispatch, in an
+# environment that holds the paid API keys.
+
+on:
+  workflow_call:
+    inputs:
+      name:
+        description: Optional experiment slug or issue to run
+        type: string
+        default: ""
+      environment:
+        description: GitHub environment holding live keys
+        type: string
+        default: ""
+      visionary_ref:
+        type: string
+        default: main
+      setup:
+        type: string
+        default: ""
+      model:
+        type: string
+        default: claude-opus-5
+      effort:
+        type: string
+        default: xhigh
+      max_turns:
+        type: number
+        default: 200
+    secrets:
+      claude_code_oauth_token:
+        required: true
+      openai_api_key:
+        required: false
+      hf_token:
+        required: false
+
+jobs:
+  experiment:
+    name: experiment
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    environment: ${{ inputs.environment }}
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      id-token: write
+      actions: read
+    concurrency:
+      group: visionary-experiment-${{ github.repository }}
+      cancel-in-progress: false
+    env:
+      OPENAI_API_KEY: ${{ secrets.openai_api_key }}
+      HF_TOKEN: ${{ secrets.hf_token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check out visionary
+        uses: actions/checkout@v4
+        with:
+          repository: jamescalam/visionary
+          ref: ${{ inputs.visionary_ref }}
+          path: .visionary
+      - name: Project setup
+        if: inputs.setup != ''
+        shell: bash
+        run: ${{ inputs.setup }}
+      - name: Experiment
+        uses: ./.visionary/actions/run-agent
+        with:
+          skill: experiment
+          args: ${{ github.repository }} ${{ inputs.name }}
+          oauth_token: ${{ secrets.claude_code_oauth_token }}
+          model: ${{ inputs.model }}
+          effort: ${{ inputs.effort }}
+          max_turns: ${{ inputs.max_turns }}
+          allowed_tools: "Read,Glob,Grep,Edit,Write,Bash(gh:*),Bash(git:*),Bash(make:*),Bash(uv:*),Bash(cat:*),Bash(ls:*),Bash(python3:*),Bash(mkdir:*)"
+          disallowed_tools: "Bash(git push --force:*),Bash(git push -f:*),Bash(git rebase:*),Bash(gh pr merge:*),Bash(gh pr close:*)"
+          json_schema: '{"type":"object","properties":{"report":{"type":"string"},"pr":{"type":["integer","null"]},"recommendation":{"type":"string"},"summary":{"type":"string"}},"required":["report","pr","recommendation","summary"]}'

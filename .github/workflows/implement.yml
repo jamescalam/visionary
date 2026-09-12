@@ -1,0 +1,71 @@
+name: Visionary implement
+
+# Reusable workflow. Implements one approved proposal issue and opens a PR.
+# Call it on issues[labeled] when the label is `approved`.
+
+on:
+  workflow_call:
+    inputs:
+      issue:
+        description: Issue number to implement
+        type: number
+        required: true
+      visionary_ref:
+        type: string
+        default: main
+      setup:
+        type: string
+        default: ""
+      model:
+        type: string
+        default: claude-opus-5
+      effort:
+        type: string
+        default: xhigh
+      max_turns:
+        type: number
+        default: 250
+    secrets:
+      claude_code_oauth_token:
+        required: true
+
+jobs:
+  implement:
+    name: implement #${{ inputs.issue }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      id-token: write
+      actions: read
+    concurrency:
+      group: visionary-implement-${{ inputs.issue }}
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check out visionary
+        uses: actions/checkout@v4
+        with:
+          repository: jamescalam/visionary
+          ref: ${{ inputs.visionary_ref }}
+          path: .visionary
+      - name: Project setup
+        if: inputs.setup != ''
+        shell: bash
+        run: ${{ inputs.setup }}
+      - name: Implement
+        uses: ./.visionary/actions/run-agent
+        with:
+          skill: implement
+          args: ${{ github.repository }} ${{ inputs.issue }}
+          oauth_token: ${{ secrets.claude_code_oauth_token }}
+          model: ${{ inputs.model }}
+          effort: ${{ inputs.effort }}
+          max_turns: ${{ inputs.max_turns }}
+          allowed_tools: "Read,Glob,Grep,Edit,Write,Bash(gh:*),Bash(git:*),Bash(make:*),Bash(uv:*),Bash(cat:*),Bash(ls:*),Bash(python3:*),Bash(mkdir:*)"
+          disallowed_tools: "Bash(git push --force:*),Bash(git push -f:*),Bash(git rebase:*),Bash(git reset --hard:*),Bash(gh pr merge:*),Bash(gh pr close:*),Bash(gh pr review:*)"
+          json_schema: '{"type":"object","properties":{"pr":{"type":["integer","null"]},"branch":{"type":"string"},"summary":{"type":"string"}},"required":["pr","branch","summary"]}'

@@ -1,0 +1,60 @@
+name: Visionary bench delta
+description: Run the repo's benchmark on the PR head and its merge base, diff the results, and post one comment on the PR.
+inputs:
+  token:
+    description: GitHub token with pull-requests write
+    required: true
+  pr_number:
+    description: Pull request number
+    required: true
+  base_sha:
+    description: Merge base commit to compare against
+    required: true
+  command:
+    description: Benchmark command (writes the results file)
+    required: false
+    default: make bench
+  results:
+    description: Path of the results JSON the command writes
+    required: false
+    default: benchmarks/results.json
+runs:
+  using: composite
+  steps:
+    - name: Bench head
+      shell: bash
+      env:
+        CMD: ${{ inputs.command }}
+        RESULTS: ${{ inputs.results }}
+      run: |
+        set -euo pipefail
+        bash -c "$CMD"
+        mkdir -p "$RUNNER_TEMP/bench"
+        cp "$RESULTS" "$RUNNER_TEMP/bench/head.json"
+    - name: Bench base
+      shell: bash
+      env:
+        CMD: ${{ inputs.command }}
+        RESULTS: ${{ inputs.results }}
+        BASE: ${{ inputs.base_sha }}
+      run: |
+        set -euo pipefail
+        git worktree add "$RUNNER_TEMP/base" "$BASE"
+        cd "$RUNNER_TEMP/base"
+        if bash -c "$CMD"; then
+          cp "$RESULTS" "$RUNNER_TEMP/bench/base.json"
+        else
+          echo "base bench failed; reporting head only"
+        fi
+    - name: Diff and comment
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+        PR: ${{ inputs.pr_number }}
+      run: |
+        set -euo pipefail
+        python3 "${{ github.action_path }}/../../scripts/bench_delta.py" \
+          "$RUNNER_TEMP/bench/head.json" "$RUNNER_TEMP/bench/base.json" > "$RUNNER_TEMP/bench/comment.md"
+        cat "$RUNNER_TEMP/bench/comment.md" >> "$GITHUB_STEP_SUMMARY"
+        python3 "${{ github.action_path }}/../../scripts/upsert_comment.py" \
+          "$PR" "<!-- visionary:bench -->" "$RUNNER_TEMP/bench/comment.md"

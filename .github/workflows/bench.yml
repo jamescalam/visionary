@@ -1,0 +1,61 @@
+name: Visionary bench
+
+# Reusable workflow. Runs the repo's benchmark on the PR head and merge base
+# and posts the delta as a PR comment the reviewer reads.
+
+on:
+  workflow_call:
+    inputs:
+      command:
+        type: string
+        default: make bench
+      results:
+        type: string
+        default: benchmarks/results.json
+      visionary_ref:
+        type: string
+        default: main
+      setup:
+        type: string
+        default: ""
+
+jobs:
+  bench:
+    name: bench delta
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+      - name: Check out visionary
+        uses: actions/checkout@v4
+        with:
+          repository: jamescalam/visionary
+          ref: ${{ inputs.visionary_ref }}
+          path: .visionary
+      - name: Project setup
+        if: inputs.setup != ''
+        shell: bash
+        run: ${{ inputs.setup }}
+      - name: Merge base
+        id: base
+        shell: bash
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+        run: |
+          git fetch origin "$BASE_REF" --depth=200
+          echo "sha=$(git merge-base HEAD "origin/$BASE_REF")" >> "$GITHUB_OUTPUT"
+      - uses: ./.visionary/actions/bench-delta
+        with:
+          token: ${{ github.token }}
+          pr_number: ${{ github.event.pull_request.number }}
+          base_sha: ${{ steps.base.outputs.sha }}
+          command: ${{ inputs.command }}
+          results: ${{ inputs.results }}

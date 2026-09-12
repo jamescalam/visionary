@@ -1,0 +1,29 @@
+# Visionary project config. Read by the visionary skills at the start of every run.
+version: 1
+
+# Commands the reviewer, verifier, and implementer run. Name → shell.
+checks:
+  lint: make lint
+  test: make test
+
+# Benchmark contract (see the experiment skill's results-schema.md). Remove
+# this block until the repo has a benchmark.
+bench:
+  command: make bench
+  results: benchmarks/results.json
+  # experiments: benchmarks/experiments
+
+review:
+  max_open_agent_prs: 3
+
+plan:
+  max_proposals: 5
+
+labels:
+  proposal: proposal
+  approved: approved
+  in_progress: in-progress
+  reconsider: reconsider
+  fix_ok: agent-fix-ok
+  experiment: experiment
+  report: experiment-report

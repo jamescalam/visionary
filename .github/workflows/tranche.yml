@@ -1,0 +1,45 @@
+name: Visionary tranche
+
+# Reusable workflow. On every pull request close, check whether the current
+# tranche milestone is complete; if so close it and dispatch the plan
+# workflow with reason tranche-closed.
+
+on:
+  workflow_call:
+    inputs:
+      plan_workflow:
+        description: File name of the caller's plan workflow to dispatch
+        type: string
+        default: visionary-plan.yml
+      visionary_ref:
+        type: string
+        default: main
+
+jobs:
+  tranche:
+    name: tranche check
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+      actions: write
+    steps:
+      - name: Check out visionary
+        uses: actions/checkout@v4
+        with:
+          repository: jamescalam/visionary
+          ref: ${{ inputs.visionary_ref }}
+          path: .visionary
+      - id: check
+        uses: ./.visionary/actions/tranche-check
+        with:
+          token: ${{ github.token }}
+          repo: ${{ github.repository }}
+      - name: Dispatch planner
+        if: steps.check.outputs.complete == 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          WORKFLOW: ${{ inputs.plan_workflow }}
+        run: gh workflow run "$WORKFLOW" --repo "$GITHUB_REPOSITORY" -f reason=tranche-closed

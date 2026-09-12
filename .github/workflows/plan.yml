@@ -1,0 +1,88 @@
+name: Visionary plan
+
+# Reusable workflow. Runs the planner against the full repo state. Call it
+# on a push to the default branch that touches VISION.md, on
+# workflow_dispatch, and from the tranche workflow when a tranche closes.
+
+on:
+  workflow_call:
+    inputs:
+      reason:
+        description: tranche-closed, vision-changed, or manual
+        type: string
+        default: manual
+      visionary_ref:
+        type: string
+        default: main
+      setup:
+        type: string
+        default: ""
+      model:
+        type: string
+        default: claude-opus-5
+      effort:
+        type: string
+        default: xhigh
+      max_turns:
+        type: number
+        default: 120
+    secrets:
+      claude_code_oauth_token:
+        required: true
+
+jobs:
+  plan:
+    name: plan (${{ inputs.reason }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+      id-token: write
+      actions: read
+    concurrency:
+      group: visionary-plan-${{ github.repository }}
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check out visionary
+        uses: actions/checkout@v4
+        with:
+          repository: jamescalam/visionary
+          ref: ${{ inputs.visionary_ref }}
+          path: .visionary
+      - name: Project setup
+        if: inputs.setup != ''
+        shell: bash
+        run: ${{ inputs.setup }}
+      - name: Ensure labels and milestone permissions
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for spec in "visionary:5319e7:Created or managed by visionary" \
+                      "proposal:0e8a16:Planner proposal awaiting a decision" \
+                      "approved:1d76db:Approved by a human; the implementer may pick it up" \
+                      "in-progress:fbca04:An implementer run has opened a PR" \
+                      "reconsider:d93f0b:Vision changed; this may no longer fit" \
+                      "experiment:bfd4f2:Experiment backlog item" \
+                      "experiment-report:c5def5:Report from the experimenter" \
+                      "agent-fix-ok:e4e669:Reviewer may push fixes to this PR"; do
+            IFS=: read -r name color desc <<< "$spec"
+            gh label create "$name" --color "$color" --description "$desc" 2>/dev/null || true
+          done
+      - name: Plan
+        uses: ./.visionary/actions/run-agent
+        with:
+          skill: plan
+          args: ${{ github.repository }} ${{ inputs.reason }}
+          oauth_token: ${{ secrets.claude_code_oauth_token }}
+          model: ${{ inputs.model }}
+          effort: ${{ inputs.effort }}
+          max_turns: ${{ inputs.max_turns }}
+          allowed_tools: "Read,Glob,Grep,Bash(gh:*),Bash(git log:*),Bash(git diff:*),Bash(git show:*),Bash(cat:*),Bash(ls:*),Bash(make:*),Bash(uv:*)"
+          disallowed_tools: "Edit,Write,Bash(git push:*),Bash(git commit:*),Bash(gh pr create:*),Bash(gh pr merge:*),Bash(gh pr close:*)"
+          json_schema: '{"type":"object","properties":{"tranche":{"type":"integer"},"created":{"type":"array","items":{"type":"integer"}},"carried":{"type":"array","items":{"type":"integer"}},"dropped":{"type":"array","items":{"type":"integer"}},"reconsider":{"type":"array","items":{"type":"integer"}},"summary":{"type":"string"}},"required":["tranche","created","carried","dropped","reconsider","summary"]}'

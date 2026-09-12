@@ -1,0 +1,18 @@
+{
+  "name": "visionary",
+  "owner": {
+    "name": "James Briggs",
+    "url": "https://github.com/jamescalam"
+  },
+  "plugins": [
+    {
+      "name": "visionary",
+      "source": "./plugin",
+      "description": "Event-driven maintenance and research loop: review, verify, experiment, plan, implement. Steered by a VISION.md in the adopting repo.",
+      "author": { "name": "James Briggs" },
+      "license": "MIT",
+      "repository": "https://github.com/jamescalam/visionary",
+      "keywords": ["agents", "github-actions", "code-review", "planning", "experiments"]
+    }
+  ]
+}

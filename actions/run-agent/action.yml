@@ -1,0 +1,138 @@
+name: Visionary run agent
+description: Run one visionary role (a plugin skill) with Claude Code, with a turn cap, a structured-output schema, and detection of whether it pushed commits.
+inputs:
+  skill:
+    description: Skill to run (review, verify, plan, implement, experiment)
+    required: true
+  args:
+    description: Arguments passed to the skill, space separated
+    required: true
+  oauth_token:
+    description: Claude subscription OAuth token (CLAUDE_CODE_OAUTH_TOKEN)
+    required: true
+  model:
+    description: Model id or alias
+    required: false
+    default: claude-opus-5
+  effort:
+    description: Effort level (low, medium, high, xhigh, max)
+    required: false
+    default: high
+  max_turns:
+    description: Turn cap for the run
+    required: false
+    default: "80"
+  allowed_tools:
+    description: Comma-separated allowed tools. The action only starts an MCP server when its tools are named here.
+    required: false
+    default: ""
+  disallowed_tools:
+    description: Comma-separated denied tools
+    required: false
+    default: ""
+  json_schema:
+    description: JSON schema the final answer must match; exposed as structured_output
+    required: false
+    default: ""
+  pr_number:
+    description: Pull request number, when set the action reports whether the head moved during the run
+    required: false
+    default: ""
+  plugin_dir:
+    description: Path to the visionary plugin directory in the workspace
+    required: false
+    default: .visionary/plugin
+  extra_claude_args:
+    description: Anything else to append to claude_args
+    required: false
+    default: ""
+outputs:
+  conclusion:
+    description: success or failure
+    value: ${{ steps.claude.outputs.conclusion }}
+  structured_output:
+    description: JSON string when json_schema was given
+    value: ${{ steps.claude.outputs.structured_output }}
+  pushed:
+    description: "true when pr_number was given and the PR head changed during the run"
+    value: ${{ steps.after.outputs.pushed }}
+  head_before:
+    description: PR head sha before the run
+    value: ${{ steps.before.outputs.sha }}
+  head_after:
+    description: PR head sha after the run
+    value: ${{ steps.after.outputs.sha }}
+runs:
+  using: composite
+  steps:
+    - name: Keep the visionary checkout out of git status
+      shell: bash
+      run: |
+        if [ -d .git ]; then
+          grep -qx '.visionary/' .git/info/exclude 2>/dev/null || echo '.visionary/' >> .git/info/exclude
+        fi
+    - name: Record PR head
+      id: before
+      if: inputs.pr_number != ''
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+        PR: ${{ inputs.pr_number }}
+      run: echo "sha=$(gh pr view "$PR" --json headRefOid -q .headRefOid)" >> "$GITHUB_OUTPUT"
+    - name: Compose claude_args
+      id: compose
+      shell: bash
+      env:
+        PLUGIN_DIR: ${{ inputs.plugin_dir }}
+        MODEL: ${{ inputs.model }}
+        EFFORT: ${{ inputs.effort }}
+        MAX_TURNS: ${{ inputs.max_turns }}
+        ALLOWED: ${{ inputs.allowed_tools }}
+        DISALLOWED: ${{ inputs.disallowed_tools }}
+        SCHEMA: ${{ inputs.json_schema }}
+        EXTRA: ${{ inputs.extra_claude_args }}
+      run: |
+        args="--plugin-dir $PLUGIN_DIR --model $MODEL --effort $EFFORT --max-turns $MAX_TURNS"
+        if [ -n "$ALLOWED" ]; then args="$args --allowedTools \"$ALLOWED\""; fi
+        if [ -n "$DISALLOWED" ]; then args="$args --disallowedTools \"$DISALLOWED\""; fi
+        if [ -n "$SCHEMA" ]; then args="$args --json-schema '$SCHEMA'"; fi
+        if [ -n "$EXTRA" ]; then args="$args $EXTRA"; fi
+        {
+          echo "args<<__CLAUDE_ARGS__"
+          echo "$args"
+          echo "__CLAUDE_ARGS__"
+        } >> "$GITHUB_OUTPUT"
+    - name: Run Claude Code
+      id: claude
+      uses: anthropics/claude-code-action@v1
+      with:
+        claude_code_oauth_token: ${{ inputs.oauth_token }}
+        prompt: "/visionary:${{ inputs.skill }} ${{ inputs.args }}"
+        claude_args: ${{ steps.compose.outputs.args }}
+        allowed_bots: "claude[bot]"
+        display_report: "true"
+    - name: Detect pushed commits
+      id: after
+      if: always() && inputs.pr_number != ''
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+        PR: ${{ inputs.pr_number }}
+        BEFORE: ${{ steps.before.outputs.sha }}
+      run: |
+        sha=$(gh pr view "$PR" --json headRefOid -q .headRefOid)
+        echo "sha=$sha" >> "$GITHUB_OUTPUT"
+        if [ -n "$BEFORE" ] && [ "$sha" != "$BEFORE" ]; then echo "pushed=true" >> "$GITHUB_OUTPUT"; else echo "pushed=false" >> "$GITHUB_OUTPUT"; fi
+    - name: Summary
+      if: always()
+      shell: bash
+      env:
+        SKILL: ${{ inputs.skill }}
+        OUT: ${{ steps.claude.outputs.structured_output }}
+        PUSHED: ${{ steps.after.outputs.pushed }}
+      run: |
+        {
+          echo "### visionary:$SKILL"
+          if [ -n "$PUSHED" ]; then echo "- pushed: $PUSHED"; fi
+          if [ -n "$OUT" ]; then echo '```json'; echo "$OUT"; echo '```'; fi
+        } >> "$GITHUB_STEP_SUMMARY"

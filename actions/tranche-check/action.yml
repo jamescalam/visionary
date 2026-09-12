@@ -1,0 +1,25 @@
+name: Visionary tranche check
+description: Decide whether the current tranche milestone is complete (no open PRs, no open issues) and close it if so.
+inputs:
+  token:
+    description: GitHub token with issues and pull-requests write
+    required: true
+  repo:
+    description: owner/repo
+    required: true
+outputs:
+  complete:
+    description: "true when a tranche was found complete and closed by this run"
+    value: ${{ steps.check.outputs.complete }}
+  tranche:
+    description: Name of the tranche examined
+    value: ${{ steps.check.outputs.tranche }}
+runs:
+  using: composite
+  steps:
+    - id: check
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+        REPO: ${{ inputs.repo }}
+      run: python3 "${{ github.action_path }}/../../scripts/tranche.py"
