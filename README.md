@@ -13,11 +13,11 @@ visionary is packaged as a Claude Code plugin plus reusable GitHub Actions workf
 | **experiment** | nightly cron | `VISION.md`, past reports, the benchmark | a report PR under `reports/` | the next plan |
 | **plan** | a tranche closes, or `VISION.md` changes | the whole repo state, including open PRs | a tranche milestone and proposal issues | you, to approve |
 | **implement** | you label a proposal `approved` | the issue, the code | a pull request | review |
-| **respond** | a human comments on anything an agent opened, or mentions `@aurelio-bot` anywhere | the comment, unresolved threads, the code | changes on the PR branch, a revised proposal, an answer, or a reaction | verify, if it pushed |
+| **respond** | a human comments on anything an agent opened, or mentions `//vision` anywhere | the comment, unresolved threads, the code | changes on the PR branch, a revised proposal, an answer, or a reaction | verify, if it pushed |
 
 An implementer's PR goes through the same review path as a human PR. Nothing agent-authored reaches `main` without a cold read and a human merge.
 
-**Talking to it.** Comment on any PR or issue an agent opened and the responder reads it and acts, which may mean doing nothing and leaving a thumbs-up. Anywhere else, mention `@aurelio-bot`. Every comment an agent posts starts with a byline naming the role and linking its run, and its commits are authored as `visionary-<role>`, because all roles share the one Claude GitHub App identity.
+**Talking to it.** Comment on any PR or issue an agent opened and the responder reads it and acts, which may mean doing nothing and leaving a thumbs-up. Anywhere else, mention `//vision`. Every comment an agent posts starts with a byline naming the role and linking its run, and its commits are authored as `visionary-<role>`, because all roles share the one Claude GitHub App identity.
 
 **Tranches.** Each planner run creates a milestone `tranche-N` that every proposal and implementer PR carries. When the milestone has no open PRs and no open issues, it closes and the planner runs again with the full repo state. A push to `main` that touches `VISION.md` also re-runs the planner, which will flag in-flight PRs that no longer fit with a `reconsider` label rather than closing them. Human PRs outside the milestone never hold a tranche open.
 

@@ -41,7 +41,7 @@ The plan workflow creates these on first run: `visionary`, `proposal`, `approved
 
 ## Talking to the agents
 
-The responder runs on every human comment on a PR or issue an agent opened, and on any comment mentioning `@aurelio-bot` elsewhere. Reviews with inline comments arrive as one `pull_request_review` event, so leave a review and submit it; each inline thread you left is read. On a proposal issue, a comment can ask the responder to revise the proposal body; it never adds `approved`. Set the mention phrase in the caller to a bot account you own. GitHub links every `@name` in a comment to that user, so an invented phrase would notify a stranger, and `@claude` collides with the Claude GitHub App's own mention handling. The template uses `@aurelio-bot`.
+The responder runs on every human comment on a PR or issue an agent opened, and on any comment mentioning `//vision` elsewhere. Reviews with inline comments arrive as one `pull_request_review` event, so leave a review and submit it; each inline thread you left is read. On a proposal issue, a comment can ask the responder to revise the proposal body; it never adds `approved`. The phrase is `//vision`, deliberately not an @-mention: GitHub links every `@name` in a comment to a real user, so an invented handle would notify a stranger, and `@claude` collides with the Claude GitHub App's own mention handling. Change it in the caller's `if:` if you want another.
 
 ## Fix mode
 
