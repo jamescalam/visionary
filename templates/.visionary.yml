@@ -20,6 +20,7 @@ plan:
   max_proposals: 5
 
 labels:
+  visionary: visionary
   proposal: proposal
   approved: approved
   in_progress: in-progress
