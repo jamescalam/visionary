@@ -36,5 +36,5 @@ visionary is a small framework that runs a loop of Claude Code agents over a cod
 ## Rules for agents
 
 - Do not change a skill's tool pre-approvals, a workflow's permissions, or a deny list without saying so in the PR body under its own heading.
-- Any change to the results contract or to `.visionary.yml` keys is breaking and needs a changelog entry and a version bump in the plugin manifest.
+- Removing or renaming a `.visionary.yml` key, a results-contract field, a workflow input, or a skill argument, or changing what one means, is breaking: it needs a **Breaking** changelog entry and a version bump in the plugin manifest. Additive changes are listed under **Changed**.
 - Templates must stay copy-and-run: every template is valid on its own with no edits other than the `setup` block.

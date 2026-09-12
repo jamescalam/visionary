@@ -1,6 +1,6 @@
 # Changelog
 
-Breaking changes to the results contract, `.visionary.yml` keys, workflow inputs, or skill arguments are listed under **Breaking** with what an adopter has to change. Everything else under **Changed**.
+Breaking means an adopter has to change something: a removed or renamed `.visionary.yml` key, a changed meaning of one, a changed results-contract field, a removed workflow input, or a changed skill argument. Those go under **Breaking** with what to change, and bump the plugin manifest version. Additive keys and inputs go under **Changed**.
 
 ## Unreleased
 
