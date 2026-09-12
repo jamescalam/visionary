@@ -4,7 +4,7 @@ version: 1
 checks:
   validate: python3 scripts/validate_plugin.py
   syntax: python3 -m py_compile scripts/*.py
-  lint: ./actionlint -ignore SC2016
+  lint: ./actionlint -ignore SC2016 .github/workflows/*.yml templates/*.yml
 
 review:
   max_open_agent_prs: 2

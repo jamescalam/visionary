@@ -13,11 +13,11 @@ Roles are skills invoked as the run's prompt: `/visionary:review owner/repo 12 c
 ```bash
 python3 scripts/validate_plugin.py      # manifests, skill frontmatter, token grep
 python3 -m py_compile scripts/*.py      # script syntax
-actionlint -ignore SC2016               # workflows, actions, templates
+./actionlint -ignore SC2016 .github/workflows/*.yml templates/*.yml   # workflows and caller templates; composite actions are not workflows and actionlint cannot parse them
 claude --plugin-dir ./plugin            # load the plugin locally, then /visionary:<role> ...
 ```
 
-CI runs the first three. There is no test suite beyond that yet; the workflows are tested by running them on this repo's own PRs and on semantic-chunkers.
+CI runs the first three (its actionlint step uses the raven-actions wrapper). In a review run the caller's `setup` downloads the pinned `actionlint` binary into the repo root, which is why the configured check calls `./actionlint`. There is no test suite beyond that yet; the workflows are tested by running them on this repo's own PRs and on semantic-chunkers.
 
 ## Layout
 
