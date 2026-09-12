@@ -24,6 +24,14 @@ on:
         description: comment (conversation), inline (one diff comment), or review (a submitted review)
         type: string
         default: comment
+      phrase:
+        description: Text that addresses a comment to this role when the thread is not already an agent's
+        type: string
+        default: //vision
+      bot_login:
+        description: Login of the agent identity; every human comment on something it opened is for this role
+        type: string
+        default: claude[bot]
       head_ref:
         description: PR head branch (empty for issues)
         type: string
@@ -58,8 +66,59 @@ env:
   VERIFY_SCHEMA: '{"type":"object","properties":{"verdict":{"type":"string","enum":["approve","changes_requested"]},"summary":{"type":"string"}},"required":["verdict","summary"]}'
 
 jobs:
+  # Whether a review is for this role cannot be decided in a workflow `if`.
+  # A single inline comment on the diff arrives as a submitted review whose
+  # body is empty and whose text lives in its inline comments, which an
+  # expression cannot read. So the caller triggers broadly and this job makes
+  # the decision with one API call.
+  gate:
+    name: gate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+      issues: read
+    outputs:
+      run: ${{ steps.decide.outputs.run }}
+    steps:
+      - id: decide
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          KIND: ${{ inputs.kind }}
+          NUMBER: ${{ inputs.number }}
+          ID: ${{ inputs.trigger_id }}
+          TRIGGER_KIND: ${{ inputs.trigger_kind }}
+          PHRASE: ${{ inputs.phrase }}
+          BOT: ${{ inputs.bot_login }}
+        run: |
+          set -uo pipefail
+          case "$TRIGGER_KIND" in
+            review) text=$(gh api "repos/$REPO/pulls/$NUMBER/reviews/$ID" --jq '.body // ""';
+                          gh api "repos/$REPO/pulls/$NUMBER/reviews/$ID/comments" --jq '.[].body' 2>/dev/null) ;;
+            inline) text=$(gh api "repos/$REPO/pulls/comments/$ID" --jq '.body // ""') ;;
+            *)      text=$(gh api "repos/$REPO/issues/comments/$ID" --jq '.body // ""') ;;
+          esac
+          if [ "$KIND" = pr ]; then
+            author=$(gh api "repos/$REPO/pulls/$NUMBER" --jq '.user.login')
+          else
+            author=$(gh api "repos/$REPO/issues/$NUMBER" --jq '.user.login')
+          fi
+          run=false
+          if [ "$author" = "$BOT" ]; then
+            run=true; echo "the $KIND was opened by $BOT, so every human comment on it is for this role"
+          elif grep -qF -- "$PHRASE" <<<"$text"; then
+            run=true; echo "the comment contains $PHRASE"
+          else
+            echo "not addressed to this role; nothing to do"
+          fi
+          echo "run=$run" >> "$GITHUB_OUTPUT"
+
   respond:
     name: respond
+    needs: gate
+    if: needs.gate.outputs.run == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 90
     permissions:
@@ -134,7 +193,7 @@ jobs:
 
   verify:
     name: verify
-    needs: respond
+    needs: [gate, respond]
     if: inputs.kind == 'pr' && needs.respond.outputs.pushed == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 60
