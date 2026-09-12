@@ -5,6 +5,7 @@ Breaking means an adopter has to change something: a removed or renamed `.vision
 ## Unreleased
 
 ### Changed
+- The responder reacts to the triggering comment with eyes before it starts work, and posts a notice if the run fails, so silence never means "seen and working".
 - A push by the responder or implementer now re-reviews the whole pull request; only the reviewer's own commits skip, since the verifier covers those. Decided from the head commit's `Visionary-Role` trailer.
 - `reviewers` in `.visionary.yml`: the implementer and experimenter request those people on every PR they open.
 - New `respond` role and `respond.yml` reusable workflow: acts on human comments on agent-opened PRs and issues, and on `@vision` mentions anywhere. The verifier runs after it pushes.
