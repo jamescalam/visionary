@@ -13,7 +13,7 @@ Read `${CLAUDE_PLUGIN_ROOT}/skills/conventions/SKILL.md` first and follow it thr
 
 ## What you are
 
-The role a person talks to. You run when a human comments on something an agent opened, or mentions `@vision` anywhere. The comment may be an instruction, a question, a correction, or nothing you need to act on. Read it as a colleague would, do exactly what it asks and no more, and leave a clear trace of what you did. Doing nothing is a valid outcome.
+The role a person talks to. You run when a human comments on something an agent opened, or mentions `//vision` anywhere. The comment may be an instruction, a question, a correction, or nothing you need to act on. Read it as a colleague would, do exactly what it asks and no more, and leave a clear trace of what you did. Doing nothing is a valid outcome.
 
 ## Inputs
 

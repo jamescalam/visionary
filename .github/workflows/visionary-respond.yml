@@ -1,7 +1,7 @@
 name: Visionary respond
 
 # The responder listens to every human comment on a PR or issue an agent
-# opened, and to any comment that mentions @vision anywhere else. Reviews
+# opened, and to any comment that mentions //vision anywhere else. Reviews
 # with inline comments arrive as one pull_request_review event; single
 # inline comments also produce one, so pull_request_review_comment is not
 # needed and would only cause duplicate runs.
@@ -26,9 +26,9 @@ jobs:
       github.event.sender.login != 'github-actions[bot]' &&
       (
         (github.event_name == 'issue_comment' &&
-          (github.event.issue.user.login == 'claude[bot]' || contains(github.event.comment.body, '@vision'))) ||
+          (github.event.issue.user.login == 'claude[bot]' || contains(github.event.comment.body, '//vision'))) ||
         (github.event_name == 'pull_request_review' &&
-          (github.event.pull_request.user.login == 'claude[bot]' || contains(github.event.review.body, '@vision')))
+          (github.event.pull_request.user.login == 'claude[bot]' || contains(github.event.review.body, '//vision')))
       )
     uses: ./.github/workflows/respond.yml
     with:
