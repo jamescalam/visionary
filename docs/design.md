@@ -20,6 +20,10 @@ A tranche is a milestone. Completion is a property of GitHub state (no open PRs,
 
 When an agent commits, GitHub raises a `synchronize` event like any other push, and the question is whether that should start a review. The reviewer's own commits should not: the verifier in the run that made them is their cold read, and re-reviewing would never terminate. Any other role's commits should, because the responder acting on human feedback or the implementer fixing something changes the pull request as a whole, and the verifier only reads the pushed range. A gate job resolves this by reading the head commit's `Visionary-Role` trailer. Separately, the caller's concurrency group is keyed on the run id for bot-triggered runs, so a bot push never cancels the run that made it.
 
+## Silence is never "still working"
+
+Every role writes something a person can see. The responder reacts to the triggering comment before it starts, so being picked up is visible within seconds. Any role whose run dies, including by reaching its turn cap, posts a short notice saying so rather than leaving the thread quiet. On a pull request the running check is visible in the checks list as well.
+
 ## Enforcement over prompting
 
 Turn caps, tool allowlists, deny lists for force-push and merge, per-PR concurrency, the bot allowlist, and branch protection are all enforced outside the model. The prompts describe good behaviour; the workflows make bad behaviour impossible or at least cheap.

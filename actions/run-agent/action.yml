@@ -54,6 +54,10 @@ inputs:
     description: Git author name for commits this role makes; defaults to visionary-<skill>
     required: false
     default: ""
+  notify_number:
+    description: Issue or PR number to comment on when the run fails, so silence never means "still working". Defaults to pr_number.
+    required: false
+    default: ""
 outputs:
   conclusion:
     description: success or failure
@@ -179,6 +183,32 @@ runs:
         sha=$(gh pr view "$PR" --json headRefOid -q .headRefOid)
         echo "sha=$sha" >> "$GITHUB_OUTPUT"
         if [ -n "$BEFORE" ] && [ "$sha" != "$BEFORE" ]; then echo "pushed=true" >> "$GITHUB_OUTPUT"; else echo "pushed=false" >> "$GITHUB_OUTPUT"; fi
+    # A role that dies mid-run posts nothing at all, which reads as "still
+    # working" to whoever is waiting. Say what happened instead.
+    - name: Say so if the run failed
+      if: failure()
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+        REPO: ${{ github.repository }}
+        NUMBER: ${{ inputs.notify_number != '' && inputs.notify_number || inputs.pr_number }}
+        SKILL: ${{ inputs.skill }}
+        TURNS: ${{ inputs.max_turns }}
+        RUN: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      run: |
+        [ -z "$NUMBER" ] && exit 0
+        if grep -q error_max_turns "$RUNNER_TEMP/claude-execution-output.json" 2>/dev/null; then
+          reason="It reached its limit of $TURNS turns before finishing, so it wrote no summary. Anything it had already pushed is on the branch; the rest was not done."
+        else
+          reason="It failed before finishing, so it wrote no summary. Anything it had already pushed is on the branch; the rest was not done."
+        fi
+        {
+          echo "<!-- visionary:$SKILL-failed -->"
+          echo "**visionary > $SKILL** - [run]($RUN)"
+          echo
+          echo "$reason"
+        } > "$RUNNER_TEMP/role-failed.md"
+        gh api -X POST "repos/$REPO/issues/$NUMBER/comments" -F "body=@$RUNNER_TEMP/role-failed.md" --silent || true
     - name: Summary
       if: always()
       shell: bash

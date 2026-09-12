@@ -27,7 +27,7 @@ on:
         default: xhigh
       max_turns:
         type: number
-        default: 80
+        default: 160
       fix_label:
         description: PRs carrying this label let the reviewer push fixes
         type: string
@@ -153,6 +153,7 @@ jobs:
           effort: ${{ inputs.effort }}
           max_turns: ${{ inputs.max_turns }}
           pr_number: ${{ github.event.pull_request.number }}
+          notify_number: ${{ github.event.pull_request.number }}
           allowed_tools: ${{ steps.mode.outputs.mode == 'fix' && env.REVIEW_TOOLS_FIX || env.REVIEW_TOOLS_COMMENT }}
           disallowed_tools: ${{ steps.mode.outputs.mode == 'fix' && 'Bash(git push --force:*),Bash(git push -f:*),Bash(git rebase:*),Bash(git reset:*)' || 'Edit,Write,Bash(git push:*),Bash(git commit:*)' }}
           json_schema: ${{ env.REVIEW_SCHEMA }}
@@ -193,6 +194,7 @@ jobs:
           skill: verify
           args: ${{ github.repository }} ${{ github.event.pull_request.number }} ${{ needs.review.outputs.head_before }} ${{ needs.review.outputs.head_after }}
           oauth_token: ${{ secrets.claude_code_oauth_token }}
+          notify_number: ${{ github.event.pull_request.number }}
           model: ${{ inputs.model }}
           effort: ${{ inputs.verifier_effort }}
           max_turns: ${{ inputs.max_turns }}
@@ -237,6 +239,7 @@ jobs:
           effort: ${{ inputs.effort }}
           max_turns: ${{ inputs.max_turns }}
           pr_number: ${{ github.event.pull_request.number }}
+          notify_number: ${{ github.event.pull_request.number }}
           allowed_tools: ${{ env.REVIEW_TOOLS_FIX }}
           disallowed_tools: "Bash(git push --force:*),Bash(git push -f:*),Bash(git rebase:*),Bash(git reset:*)"
           json_schema: ${{ env.REVIEW_SCHEMA }}

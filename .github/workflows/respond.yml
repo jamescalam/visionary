@@ -41,7 +41,7 @@ on:
         default: xhigh
       max_turns:
         type: number
-        default: 100
+        default: 160
     secrets:
       claude_code_oauth_token:
         required: true
@@ -122,26 +122,10 @@ jobs:
           effort: ${{ inputs.effort }}
           max_turns: ${{ inputs.max_turns }}
           pr_number: ${{ inputs.kind == 'pr' && inputs.number || '' }}
+          notify_number: ${{ inputs.number }}
           allowed_tools: ${{ env.RESPOND_TOOLS }}
           disallowed_tools: ${{ env.RESPOND_DENY }}
           json_schema: ${{ env.RESPOND_SCHEMA }}
-      # Silence after a reaction reads as "still working"; say so when it is not.
-      - name: Say so if the run failed
-        if: failure()
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-          REPO: ${{ github.repository }}
-          NUMBER: ${{ inputs.number }}
-          RUN: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-        run: |
-          {
-            echo "<!-- visionary:respond-failed -->"
-            echo "**visionary > responder** - [run]($RUN)"
-            echo
-            echo "This run failed before it could answer. Nothing was changed. The run log has the detail; comment again to retry."
-          } > "$RUNNER_TEMP/failed.md"
-          gh api -X POST "repos/$REPO/issues/$NUMBER/comments" -F "body=@$RUNNER_TEMP/failed.md" --silent || true
 
   verify:
     name: verify
@@ -176,6 +160,7 @@ jobs:
           skill: verify
           args: ${{ github.repository }} ${{ inputs.number }} ${{ needs.respond.outputs.head_before }} ${{ needs.respond.outputs.head_after }}
           oauth_token: ${{ secrets.claude_code_oauth_token }}
+          notify_number: ${{ inputs.number }}
           model: ${{ inputs.model }}
           effort: ${{ inputs.verifier_effort }}
           max_turns: ${{ inputs.max_turns }}

@@ -66,6 +66,7 @@ jobs:
           model: ${{ inputs.model }}
           effort: ${{ inputs.effort }}
           max_turns: ${{ inputs.max_turns }}
+          notify_number: ${{ inputs.issue }}
           allowed_tools: "Read,Glob,Grep,Edit,Write,Bash(gh:*),Bash(git:*),Bash(make:*),Bash(uv:*),Bash(cat:*),Bash(ls:*),Bash(python3:*),Bash(mkdir:*)"
           disallowed_tools: "Bash(git push --force:*),Bash(git push -f:*),Bash(git rebase:*),Bash(git reset --hard:*),Bash(gh pr merge:*),Bash(gh pr close:*),Bash(gh pr review:*)"
           json_schema: '{"type":"object","properties":{"pr":{"type":["integer","null"]},"branch":{"type":"string"},"summary":{"type":"string"}},"required":["pr","branch","summary"]}'

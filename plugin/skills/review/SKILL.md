@@ -40,7 +40,8 @@ The first reader of every pull request in this repo. Human PRs get a careful, ho
 
 5. **Fix mode only.** When `$mode` is `fix`, fix what is clear-cut and small: a lint or format failure, a test this PR broke, a bug you found and are certain of, a missing test for changed behaviour that is quick to add. One commit per fix, conventional message, trailer `Visionary-Role: review`. Run the checks again. Push with `git push origin HEAD:<headRefName>`. Do not change what the PR is trying to do, do not refactor around it, and do not touch files the PR did not touch unless the fix needs it. A fix over roughly forty lines is described in the summary instead of made.
 
-6. **Summary comment.** Post exactly one comment with `gh pr comment $number --body-file <file>`, or edit the existing one when the round matches. Format:
+6. **Budget.** You have a turn cap and hitting it loses everything you have not posted. On a large diff, post the summary comment as soon as you have a verdict and your findings, then push fixes and edit that comment to add the *Fixes pushed* section. A posted review with two findings beats a perfect one that never lands.
+7. **Summary comment.** Post exactly one comment with `gh pr comment $number --body-file <file>`, or edit the existing one when the round matches. Format:
 
 ```
 <!-- visionary:review round=<n> -->
