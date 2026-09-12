@@ -44,6 +44,7 @@ The first reader of every pull request in this repo. Human PRs get a careful, ho
 
 ```
 <!-- visionary:review round=<n> -->
+**visionary › reviewer** · [run](<run url>)
 ## Visionary review
 
 **Verdict:** approve | changes requested | comment

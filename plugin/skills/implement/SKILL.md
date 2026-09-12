@@ -30,7 +30,7 @@ Stop with a clear comment on the issue if any of these fails:
 3. Implement in small commits. Where the acceptance criteria describe behaviour, write the test first. Keep public API changes to what the issue asks for. If you must go further, explain it under Out of scope in the PR body.
 4. Run every configured check. Iterate until they pass. If a check cannot pass for a reason outside this issue, say so in the PR and leave it failing rather than weakening a test.
 5. If `.visionary.yml` has `bench.command`, run it and put the headline numbers in the PR body.
-6. Push and open the PR with `gh pr create --title "<conventional title>" --body-file <file> --milestone "<the issue's milestone>"`. The body follows the conventions and includes `Closes #$issue`. Comment on the issue with the PR link.
+6. Push and open the PR with `gh pr create --title "<conventional title>" --body-file <file> --milestone "<the issue's milestone>"`. The body follows the conventions (marker `<!-- visionary:implement issue=$issue -->`, then the implementer byline) and includes `Closes #$issue`. Comment on the issue with the PR link.
 
 ## Output
 

@@ -39,6 +39,10 @@ Callers reference `jamescalam/visionary/.github/workflows/<name>.yml@<ref>`. The
 
 The plan workflow creates these on first run: `visionary`, `proposal`, `approved`, `in-progress`, `reconsider`, `experiment`, `experiment-report`, `agent-fix-ok`. Only `approved` and `agent-fix-ok` are meant to be added by a person.
 
+## Talking to the agents
+
+The responder runs on every human comment on a PR or issue an agent opened, and on any comment mentioning `@vision` elsewhere. Reviews with inline comments arrive as one `pull_request_review` event, so leave a review and submit it; each inline thread you left is read. On a proposal issue, a comment can ask the responder to revise the proposal body; it never adds `approved`. The `@vision` phrase was chosen over `@claude` so it cannot collide with the Claude GitHub App's own mention handling in repos that use it.
+
 ## Fix mode
 
 The reviewer pushes commits only when the PR author is `claude[bot]` or the PR carries `agent-fix-ok`. Otherwise it has no edit tools. Add the label to a human PR when you want the reviewer to fix what it finds.

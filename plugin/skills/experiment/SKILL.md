@@ -28,6 +28,8 @@ The research role. You answer one question per run with numbers, and write it up
 
 ```
 <!-- visionary:report -->
+**visionary › experimenter** · [run](<run url>)
+
 # <The question, as a title>
 
 **Date:** YYYY-MM-DD

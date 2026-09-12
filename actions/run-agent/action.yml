@@ -50,6 +50,10 @@ inputs:
     description: Print the full Claude Code message stream to the job log (tool results included)
     required: false
     default: "true"
+  bot_name:
+    description: Git author name for commits this role makes; defaults to visionary-<skill>
+    required: false
+    default: ""
 outputs:
   conclusion:
     description: success or failure
@@ -159,6 +163,7 @@ runs:
         prompt: "/visionary:${{ inputs.skill }} ${{ inputs.args }}"
         claude_args: ${{ steps.compose.outputs.args }}
         allowed_bots: "claude[bot]"
+        bot_name: ${{ inputs.bot_name != '' && inputs.bot_name || format('visionary-{0}', inputs.skill) }}
         display_report: "true"
         show_full_output: ${{ inputs.show_full_output }}
     - name: Detect pushed commits

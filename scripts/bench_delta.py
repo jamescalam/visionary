@@ -71,6 +71,9 @@ def main() -> int:
     lines.append("| suite | variant | " + " | ".join(headline) + " |")
     lines.append("|---|---|" + "|".join(["---:"] * len(headline)) + "|")
     for s in suites:
+        if s.get("error"):
+            lines.append(f"| {s.get('name','')} | {s.get('variant','')} | failed: `{s['error'][:120]}` |" + " |" * (len(headline) - 1))
+            continue
         b = base_by_key.get(key(s), {}).get("metrics", {})
         row = [cell(m, s["metrics"].get(m), b.get(m), directions) if m in s["metrics"] else "" for m in headline]
         lines.append(f"| {s.get('name','')} | {s.get('variant','')} | " + " | ".join(row) + " |")
