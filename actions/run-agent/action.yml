@@ -150,6 +150,7 @@ runs:
         if [ -n "$DISALLOWED" ]; then args="$args --disallowedTools \"$DISALLOWED\""; fi
         if [ -n "$SCHEMA" ]; then args="$args --json-schema '$SCHEMA'"; fi
         if [ -n "$EXTRA" ]; then args="$args $EXTRA"; fi
+        args="$args --append-system-prompt 'This is GitHub Actions run $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID; use that URL in bylines.'"
         {
           echo "args<<__CLAUDE_ARGS__"
           echo "$args"
