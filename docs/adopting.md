@@ -27,6 +27,10 @@
 
 Callers map secrets explicitly (`secrets: {claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}}`) rather than `secrets: inherit`, so visionary's workflow code never sees secrets it does not need.
 
+## Permissions
+
+A called workflow cannot hold more permissions than its caller, and `id-token: write` (needed for the Claude GitHub App token exchange) is never granted by default. Every caller template therefore carries an explicit `permissions` block. Removing it makes the run fail at startup with no job output.
+
 ## Pinning
 
 Callers reference `jamescalam/visionary/.github/workflows/<name>.yml@<ref>`. The reusable workflow checks out the same ref of visionary into `.visionary/` and loads the plugin from there, so workflows, actions, and prompts always match. Use `@main` while things move quickly; pin to a tag once you want stability.

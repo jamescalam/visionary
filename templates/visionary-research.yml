@@ -10,6 +10,13 @@ on:
         type: string
         default: ""
 
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  id-token: write
+  actions: read
+
 jobs:
   experiment:
     uses: jamescalam/visionary/.github/workflows/experiment.yml@main
