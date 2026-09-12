@@ -3,7 +3,7 @@ name: Visionary respond
 # Reusable workflow. Runs the responder on a human comment or review, then
 # the verifier when the responder pushed commits. The caller decides which
 # comments qualify (see templates/visionary-respond.yml): every human comment
-# on an agent-authored PR or issue, or any comment mentioning @vision.
+# on an agent-authored PR or issue, or any comment mentioning @aurelio-bot.
 
 on:
   workflow_call:
