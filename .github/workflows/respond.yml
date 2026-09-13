@@ -139,6 +139,12 @@ jobs:
       # within seconds that the comment was picked up. A comment takes a
       # reaction; a review does not, so that falls back to its first inline
       # comment and is skipped if it has none.
+      # Acknowledge before doing anything, so the person who commented sees
+      # within seconds that it was picked up. GitHub has no reactions endpoint
+      # for a review, only for comments, so a review is acknowledged on each of
+      # its inline comments, and a review with only a body falls back to the
+      # pull request itself — otherwise the wait is indistinguishable from
+      # being ignored, since a review-triggered run shows in no checks list.
       - name: Acknowledge the trigger
         shell: bash
         env:
@@ -149,18 +155,28 @@ jobs:
           NUMBER: ${{ inputs.number }}
         run: |
           react() { gh api -X POST "$1/reactions" -f content=eyes --silent 2>/dev/null; }
-          if [ "$KIND" = comment ] && react "repos/$REPO/issues/comments/$ID"; then
-            echo "reacted to conversation comment $ID"
-          elif [ "$KIND" = inline ] && react "repos/$REPO/pulls/comments/$ID"; then
-            echo "reacted to inline comment $ID"
-          else
-            first=$(gh api "repos/$REPO/pulls/$NUMBER/comments" --jq "[.[] | select(.pull_request_review_id == $ID)][0].id" 2>/dev/null || echo "")
-            if [ -n "$first" ] && [ "$first" != "null" ] && react "repos/$REPO/pulls/comments/$first"; then
-              echo "reacted to the review's first inline comment $first"
-            else
-              echo "nothing to react to; the run link is the only signal"
-            fi
-          fi
+          case "$KIND" in
+            comment)
+              react "repos/$REPO/issues/comments/$ID" && echo "reacted to conversation comment $ID"
+              ;;
+            inline)
+              react "repos/$REPO/pulls/comments/$ID" && echo "reacted to inline comment $ID"
+              ;;
+            review)
+              n=0
+              for cid in $(gh api "repos/$REPO/pulls/$NUMBER/comments" --paginate \
+                    --jq "[.[] | select(.pull_request_review_id == $ID)][].id" 2>/dev/null); do
+                react "repos/$REPO/pulls/comments/$cid" && n=$((n+1))
+              done
+              if [ "$n" -gt 0 ]; then
+                echo "reacted to $n inline comment(s) of review $ID"
+              elif react "repos/$REPO/issues/$NUMBER"; then
+                echo "review $ID has only a body, which takes no reaction; reacted to the pull request"
+              else
+                echo "nothing could be reacted to; the reply will be the only signal"
+              fi
+              ;;
+          esac
       - uses: actions/checkout@v4
         with:
           ref: ${{ inputs.head_ref != '' && inputs.head_ref || github.event.repository.default_branch }}
