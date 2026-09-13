@@ -145,7 +145,16 @@ jobs:
       # its inline comments, and a review with only a body falls back to the
       # pull request itself — otherwise the wait is indistinguishable from
       # being ignored, since a review-triggered run shows in no checks list.
+      # Acknowledge before doing anything, so the person who wrote it sees
+      # within seconds that it was picked up. GitHub has no reactions endpoint
+      # for a review, only for comments, so a review is acknowledged on each of
+      # its inline comments; a review carrying only a summary has no reaction
+      # target at all and gets a short comment instead, deleted when the run
+      # ends so it never sits beside the real reply. Without this the wait is
+      # indistinguishable from being ignored: a review-triggered run appears in
+      # no checks list.
       - name: Acknowledge the trigger
+        id: ack
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
@@ -153,8 +162,18 @@ jobs:
           ID: ${{ inputs.trigger_id }}
           KIND: ${{ inputs.trigger_kind }}
           NUMBER: ${{ inputs.number }}
+          RUN: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           react() { gh api -X POST "$1/reactions" -f content=eyes --silent 2>/dev/null; }
+          say_seen() {
+            {
+              echo "<!-- visionary:respond-ack -->"
+              echo "**visionary > responder** - [run]($RUN)"
+              echo
+              echo "Seen, working on it. This note is replaced by the reply when the run ends."
+            } > "$RUNNER_TEMP/ack.md"
+            gh api -X POST "repos/$REPO/issues/$NUMBER/comments" -F "body=@$RUNNER_TEMP/ack.md" --jq .id
+          }
           case "$KIND" in
             comment)
               react "repos/$REPO/issues/comments/$ID" && echo "reacted to conversation comment $ID"
@@ -170,10 +189,12 @@ jobs:
               done
               if [ "$n" -gt 0 ]; then
                 echo "reacted to $n inline comment(s) of review $ID"
-              elif react "repos/$REPO/issues/$NUMBER"; then
-                echo "review $ID has only a body, which takes no reaction; reacted to the pull request"
               else
-                echo "nothing could be reacted to; the reply will be the only signal"
+                ack=$(say_seen || true)
+                if [ -n "$ack" ]; then
+                  echo "ack=$ack" >> "$GITHUB_OUTPUT"
+                  echo "review $ID carries only a summary; said seen in comment $ack"
+                fi
               fi
               ;;
           esac
@@ -206,6 +227,16 @@ jobs:
           allowed_tools: ${{ env.RESPOND_TOOLS }}
           disallowed_tools: ${{ env.RESPOND_DENY }}
           json_schema: ${{ env.RESPOND_SCHEMA }}
+      # The reply, or the failure notice run-agent posts, says everything the
+      # holding note said and more.
+      - name: Clear the holding note
+        if: always() && steps.ack.outputs.ack != ''
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          ACK: ${{ steps.ack.outputs.ack }}
+        run: gh api -X DELETE "repos/$REPO/issues/comments/$ACK" --silent || true
 
   verify:
     name: verify

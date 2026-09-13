@@ -5,7 +5,7 @@ Breaking means an adopter has to change something: a removed or renamed `.vision
 ## Unreleased
 
 ### Changed
-- A submitted review is now acknowledged too: on each of its inline comments, or on the pull request when the review carries only a summary, since GitHub has no reactions endpoint for a review.
+- A submitted review is now acknowledged too: on each of its inline comments, or with a short holding comment when it carries only a summary, since GitHub has no reactions endpoint for a review. The holding comment is deleted when the run ends.
 - The responder's concurrency group moved from the workflow to the job, so a comment by the agents themselves can no longer cancel a pending human-triggered run and then skip itself.
 - The bench workflow publishes what the suite writes as a downloadable artifact and links it from a marked block in the pull request description (`publish`), rebuilt on every push, and caches a run-history file between runs (`history`) so trend charts have data on a fresh runner.
 - A single inline comment on the diff now triggers the responder. It arrives as a submitted review with an empty body and its text in the inline comments, which a workflow expression cannot read, so a gate job in `respond.yml` makes the decision.
