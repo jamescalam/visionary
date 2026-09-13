@@ -39,6 +39,10 @@ Callers reference `jamescalam/visionary/.github/workflows/<name>.yml@<ref>`. The
 
 The plan workflow creates these on first run: `visionary`, `proposal`, `approved`, `in-progress`, `reconsider`, `experiment`, `experiment-report`, `agent-fix-ok`. Only `approved` and `agent-fix-ok` are meant to be added by a person.
 
+## Where output goes
+
+Anything a run produces that a person should be able to open — a rendered report, a results file, a history of past runs — is published as a downloadable artifact and linked from a marked block in the pull request description, rebuilt on every push so the link is never stale. The description is the first thing a reader lands on, and unlike a comment it cannot be buried. Name those paths in the bench caller's `publish` input.
+
 ## Who reviews
 
 List the people who should be asked to review agent-authored PRs under `reviewers` in `.visionary.yml`. The implementer and experimenter request them on every PR they open. Agents cannot approve, so branch protection plus a requested human reviewer is the merge gate.

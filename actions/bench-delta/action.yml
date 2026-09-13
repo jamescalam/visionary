@@ -92,13 +92,30 @@ runs:
         else
           echo "base bench failed or has no benchmark; reporting head only"
         fi
+    - name: Link the artifact from the pull request body
+      if: steps.upload.outputs.artifact-url != ''
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+        GITHUB_REPOSITORY: ${{ github.repository }}
+        PR: ${{ inputs.pr_number }}
+        URL: ${{ steps.upload.outputs.artifact-url }}
+        SHA: ${{ github.event.pull_request.head.sha }}
+        RUN: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      run: |
+        set -euo pipefail
+        {
+          echo "**Benchmark output** · [download]($URL) · from [this run]($RUN) on \`${SHA:0:7}\`"
+          echo
+          echo "Rebuilt on every push, so the link always points at the latest run."
+        } > "$RUNNER_TEMP/bench/artifacts.md"
+        python3 "${{ github.action_path }}/../../scripts/upsert_body_block.py" \
+          "$PR" "<!-- visionary:artifacts -->" "$RUNNER_TEMP/bench/artifacts.md"
     - name: Diff and comment
       shell: bash
       env:
         GH_TOKEN: ${{ inputs.token }}
         PR: ${{ inputs.pr_number }}
-        ARTIFACT_URL: ${{ steps.upload.outputs.artifact-url }}
-        ARTIFACT_NAME: benchmark-pr${{ inputs.pr_number }}-${{ github.run_id }}
       run: |
         set -euo pipefail
         python3 "${{ github.action_path }}/../../scripts/bench_delta.py" \
