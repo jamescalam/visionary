@@ -12,6 +12,14 @@ on:
       results:
         type: string
         default: benchmarks/results.json
+      publish:
+        description: Extra paths the benchmark writes that should be downloadable from the pull request, such as a rendered report
+        type: string
+        default: ""
+      history:
+        description: A run-history file the benchmark appends to; cached between runs so a trend survives the runner
+        type: string
+        default: ""
       visionary_ref:
         type: string
         default: main
@@ -29,6 +37,7 @@ jobs:
       contents: read
       pull-requests: write
       issues: write
+      actions: write
     steps:
       - uses: actions/checkout@v4
         with:
@@ -59,3 +68,5 @@ jobs:
           base_sha: ${{ steps.base.outputs.sha }}
           command: ${{ inputs.command }}
           results: ${{ inputs.results }}
+          publish: ${{ inputs.publish }}
+          history: ${{ inputs.history }}

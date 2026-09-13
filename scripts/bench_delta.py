@@ -8,6 +8,7 @@ direction. Every other metric goes into a collapsed full table.
 from __future__ import annotations
 
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -67,6 +68,11 @@ def main() -> int:
         lines.append(f"head `{head.get('commit', '?')}` against base `{base.get('commit', '?')}`. Cells read base → head (delta, verdict).")
     else:
         lines.append(f"head `{head.get('commit', '?')}`, no base results (the base has no benchmark yet or it failed).")
+    url = os.environ.get("ARTIFACT_URL", "").strip()
+    if url:
+        name = os.environ.get("ARTIFACT_NAME", "the run's files").strip()
+        lines.append("")
+        lines.append(f"Full output, including the rendered report if the suite writes one: [{name}]({url}) (zip, 30 days).")
     lines.append("")
     lines.append("| suite | variant | " + " | ".join(headline) + " |")
     lines.append("|---|---|" + "|".join(["---:"] * len(headline)) + "|")

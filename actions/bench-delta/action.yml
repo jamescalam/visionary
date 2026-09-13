@@ -1,5 +1,5 @@
 name: Visionary bench delta
-description: Run the repo's benchmark on the PR head and its merge base, diff the results, and post one comment on the PR.
+description: Run the repo's benchmark on the PR head and its merge base, publish whatever the run produced, and post one comment on the PR with the table and a download link.
 inputs:
   token:
     description: GitHub token with pull-requests write
@@ -18,9 +18,24 @@ inputs:
     description: Path of the results JSON the command writes
     required: false
     default: benchmarks/results.json
+  publish:
+    description: Newline- or space-separated paths to publish as a downloadable artifact, in addition to the results file. Missing paths are skipped.
+    required: false
+    default: ""
+  history:
+    description: Path of a run-history file the command appends to. Restored before the run and saved after, so a trend across pull requests survives the runner being thrown away.
+    required: false
+    default: ""
 runs:
   using: composite
   steps:
+    - name: Restore benchmark history
+      if: inputs.history != ''
+      uses: actions/cache/restore@v4
+      with:
+        path: ${{ inputs.history }}
+        key: visionary-bench-history-${{ github.repository }}-${{ github.run_id }}
+        restore-keys: visionary-bench-history-${{ github.repository }}-
     - name: Bench head
       shell: bash
       env:
@@ -31,6 +46,37 @@ runs:
         bash -c "$CMD"
         mkdir -p "$RUNNER_TEMP/bench"
         cp "$RESULTS" "$RUNNER_TEMP/bench/head.json"
+    - name: Collect what the run produced
+      id: collect
+      shell: bash
+      env:
+        RESULTS: ${{ inputs.results }}
+        PUBLISH: ${{ inputs.publish }}
+        HISTORY: ${{ inputs.history }}
+      run: |
+        set -euo pipefail
+        dir="$RUNNER_TEMP/bench-publish"
+        mkdir -p "$dir"
+        cp "$RESULTS" "$dir/" 2>/dev/null || true
+        for p in $PUBLISH $HISTORY; do
+          [ -f "$p" ] && cp "$p" "$dir/" && echo "publishing $p"
+        done
+        echo "dir=$dir" >> "$GITHUB_OUTPUT"
+        ls -la "$dir"
+    - name: Publish them
+      id: upload
+      uses: actions/upload-artifact@v4
+      with:
+        name: benchmark-pr${{ inputs.pr_number }}-${{ github.run_id }}
+        path: ${{ steps.collect.outputs.dir }}
+        if-no-files-found: warn
+        retention-days: 30
+    - name: Save benchmark history
+      if: inputs.history != '' && hashFiles(inputs.history) != ''
+      uses: actions/cache/save@v4
+      with:
+        path: ${{ inputs.history }}
+        key: visionary-bench-history-${{ github.repository }}-${{ github.run_id }}
     - name: Bench base
       shell: bash
       env:
@@ -44,13 +90,15 @@ runs:
         if bash -c "$CMD"; then
           cp "$RESULTS" "$RUNNER_TEMP/bench/base.json"
         else
-          echo "base bench failed; reporting head only"
+          echo "base bench failed or has no benchmark; reporting head only"
         fi
     - name: Diff and comment
       shell: bash
       env:
         GH_TOKEN: ${{ inputs.token }}
         PR: ${{ inputs.pr_number }}
+        ARTIFACT_URL: ${{ steps.upload.outputs.artifact-url }}
+        ARTIFACT_NAME: benchmark-pr${{ inputs.pr_number }}-${{ github.run_id }}
       run: |
         set -euo pipefail
         python3 "${{ github.action_path }}/../../scripts/bench_delta.py" \
