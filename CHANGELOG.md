@@ -5,6 +5,7 @@ Breaking means an adopter has to change something: a removed or renamed `.vision
 ## Unreleased
 
 ### Changed
+- The responder's concurrency group moved from the workflow to the job, so a comment by the agents themselves can no longer cancel a pending human-triggered run and then skip itself.
 - The bench workflow publishes what the suite writes as a downloadable artifact and links it from a marked block in the pull request description (`publish`), rebuilt on every push, and caches a run-history file between runs (`history`) so trend charts have data on a fresh runner.
 - A single inline comment on the diff now triggers the responder. It arrives as a submitted review with an empty body and its text in the inline comments, which a workflow expression cannot read, so a gate job in `respond.yml` makes the decision.
 - Any role whose run fails or reaches its turn cap now posts a notice on the PR or issue instead of going quiet. Review and respond turn caps raised to 160.
