@@ -149,10 +149,9 @@ jobs:
       # within seconds that it was picked up. GitHub has no reactions endpoint
       # for a review, only for comments, so a review is acknowledged on each of
       # its inline comments; a review carrying only a summary has no reaction
-      # target at all and gets a short comment instead, deleted when the run
-      # ends so it never sits beside the real reply. Without this the wait is
-      # indistinguishable from being ignored: a review-triggered run appears in
-      # no checks list.
+      # target at all and gets a short comment instead, which stays as a record
+      # of when the work started. Without this the wait is indistinguishable
+      # from being ignored: a review-triggered run appears in no checks list.
       - name: Acknowledge the trigger
         id: ack
         shell: bash
@@ -170,7 +169,7 @@ jobs:
               echo "<!-- visionary:respond-ack -->"
               echo "**visionary > responder** - [run]($RUN)"
               echo
-              echo "Seen, working on it. This note is replaced by the reply when the run ends."
+              echo "Seen, working on it. The reply follows in this thread."
             } > "$RUNNER_TEMP/ack.md"
             gh api -X POST "repos/$REPO/issues/$NUMBER/comments" -F "body=@$RUNNER_TEMP/ack.md" --jq .id
           }
@@ -227,16 +226,6 @@ jobs:
           allowed_tools: ${{ env.RESPOND_TOOLS }}
           disallowed_tools: ${{ env.RESPOND_DENY }}
           json_schema: ${{ env.RESPOND_SCHEMA }}
-      # The reply, or the failure notice run-agent posts, says everything the
-      # holding note said and more.
-      - name: Clear the holding note
-        if: always() && steps.ack.outputs.ack != ''
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-          REPO: ${{ github.repository }}
-          ACK: ${{ steps.ack.outputs.ack }}
-        run: gh api -X DELETE "repos/$REPO/issues/comments/$ACK" --silent || true
 
   verify:
     name: verify
