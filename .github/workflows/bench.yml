@@ -33,11 +33,13 @@ jobs:
     if: github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    # Uploading an artifact and caching need no permission beyond these; a
+    # called workflow cannot hold more than its caller grants, and asking for
+    # more fails the run before any job starts.
     permissions:
       contents: read
       pull-requests: write
       issues: write
-      actions: write
     steps:
       - uses: actions/checkout@v4
         with:
