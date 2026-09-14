@@ -197,9 +197,29 @@ jobs:
               fi
               ;;
           esac
+      # A pull request can be merged, and its branch deleted, between the
+      # comment and this run. Checking out a ref that no longer exists fails
+      # the whole run and the comment goes unanswered, so fall back to the
+      # default branch and let the role answer without pushing.
+      - name: Resolve a ref that still exists
+        id: ref
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          HEAD_REF: ${{ inputs.head_ref }}
+          DEFAULT: ${{ github.event.repository.default_branch }}
+        run: |
+          ref="$DEFAULT"
+          if [ -n "$HEAD_REF" ] && gh api "repos/$REPO/branches/$HEAD_REF" --silent 2>/dev/null; then
+            ref="$HEAD_REF"
+          elif [ -n "$HEAD_REF" ]; then
+            echo "branch $HEAD_REF is gone; working from $DEFAULT and answering without pushing"
+          fi
+          echo "ref=$ref" >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.head_ref != '' && inputs.head_ref || github.event.repository.default_branch }}
+          ref: ${{ steps.ref.outputs.ref }}
           fetch-depth: 0
       - name: Check out visionary
         uses: actions/checkout@v4

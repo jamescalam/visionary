@@ -5,6 +5,8 @@ Breaking means an adopter has to change something: a removed or renamed `.vision
 ## Unreleased
 
 ### Changed
+- Runs this pipeline dispatches itself, and scheduled runs, are attributed to `github-actions[bot]`, which the action rejected as a non-human actor; it is now allowed alongside `claude[bot]`.
+- A comment on a pull request whose branch has since been deleted no longer fails the run: the responder works from the default branch and answers without pushing.
 - A submitted review is now acknowledged too: on each of its inline comments, or with a short holding comment when it carries only a summary, since GitHub has no reactions endpoint for a review.
 - The responder's concurrency group moved from the workflow to the job, so a comment by the agents themselves can no longer cancel a pending human-triggered run and then skip itself.
 - The bench workflow publishes what the suite writes as a downloadable artifact and links it from a marked block in the pull request description (`publish`), rebuilt on every push, and caches a run-history file between runs (`history`) so trend charts have data on a fresh runner.

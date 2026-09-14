@@ -25,6 +25,10 @@ The role a person talks to. You run when a human comments on something an agent 
 - Also read every other unresolved inline thread on a PR (`gh api repos/$repo/pulls/$number/comments`), and the last few conversation comments, so you act on the whole of what the person has asked, not just the latest line.
 - `.visionary.yml`, `AGENTS.md`, `VISION.md` as usual.
 
+## A closed or merged pull request
+
+Check `gh pr view $number --json state,merged` first when `$kind` is `pr`. A merged or closed pull request takes no commits: its branch may not exist any more, and the working directory may be the default branch rather than the change under discussion. Answer in the thread, say plainly that the pull request is already merged or closed so nothing was pushed, and where the work would have to go instead — a follow-up issue, or a new pull request the person can ask for. Never push, and never reopen.
+
 ## Do not redo work
 
 A review carrying both a summary and inline comments fires this role more than once, and the runs are queued. Before acting, check whether a responder reply already sits after the comment you were given, or whether a `<!-- visionary:respond` comment already reports the change it asks for. If so, react to the comment and stop. Acting twice on one request is worse than not acting.
